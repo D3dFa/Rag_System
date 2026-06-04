@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RAG по дискретной математике</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="mark">DM</div>
+          <div>
+            <h1>RAG по главе</h1>
+            <p id="sourceLabel">DM2024.pdf</p>
+          </div>
+        </div>
+
+        <section class="meta-block">
+          <div class="metric-row">
+            <span>Глав</span>
+            <strong id="chapterCount">-</strong>
+          </div>
+          <div class="metric-row">
+            <span>Страниц PDF</span>
+            <strong id="pageCount">-</strong>
+          </div>
+        </section>
+
+        <section class="meta-block">
+          <h2 id="chapterTitle">Выбранная глава</h2>
+          <p id="chapterPages" class="muted"></p>
+          <div id="keywords" class="tags"></div>
+        </section>
+
+        <section class="meta-block chapter-list">
+          <h2>Главы учебника</h2>
+          <ol id="chapters"></ol>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <nav class="tabs" aria-label="Режим">
+          <button class="tab active" data-view="chat" type="button">Чат</button>
+          <button class="tab" data-view="trainer" type="button">Тренажер</button>
+        </nav>
+
+        <section id="chatView" class="panel active">
+          <div id="messages" class="messages">
+            <article class="message system">
+              <p>Задайте вопрос по главе «Множества и отношения».</p>
+            </article>
+          </div>
+          <form id="askForm" class="composer">
+            <textarea id="questionInput" rows="3" placeholder="Например: что такое отношение эквивалентности?"></textarea>
+            <button id="askButton" type="submit">Ответить</button>
+          </form>
+        </section>
+
+        <section id="trainerView" class="panel trainer">
+          <div class="trainer-question">
+            <div>
+              <span class="eyebrow">Вопрос</span>
+              <h2 id="trainerQuestion">-</h2>
+              <p id="trainerSource" class="muted"></p>
+            </div>
+            <button id="nextQuestion" type="button">Следующий</button>
+          </div>
+          <form id="trainerForm" class="trainer-form">
+            <textarea id="trainerAnswer" rows="6" placeholder="Ваш ответ"></textarea>
+            <button id="checkAnswer" type="submit">Проверить</button>
+          </form>
+          <article id="trainerResult" class="result empty"></article>
+        </section>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
