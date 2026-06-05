@@ -1,5 +1,8 @@
 DM2024.pdf
 logs/
+server.*.log
+ontology_pages/
+ontology_first_scan/
 __pycache__/
 *.pyc
 .env

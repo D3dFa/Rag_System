@@ -130,18 +130,6 @@ h2 {
   line-height: 1.2;
 }
 
-.chapter-list ol {
-  margin: 12px 0 0;
-  padding-left: 22px;
-}
-
-.chapter-list li {
-  margin: 8px 0;
-  color: #3d4852;
-  font-size: 13px;
-  line-height: 1.35;
-}
-
 .workspace {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -282,6 +270,13 @@ textarea:focus {
   background: var(--accent-strong);
 }
 
+.composer button:disabled,
+.trainer-form button:disabled,
+.trainer-question button:disabled {
+  cursor: default;
+  background: #a8b3bd;
+}
+
 .trainer {
   align-content: start;
   gap: 16px;
@@ -296,6 +291,13 @@ textarea:focus {
   border-radius: 8px;
   background: var(--panel);
   padding: 18px;
+}
+
+.trainer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .trainer-question h2 {

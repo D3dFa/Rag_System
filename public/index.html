@@ -33,11 +33,6 @@
           <p id="chapterPages" class="muted"></p>
           <div id="keywords" class="tags"></div>
         </section>
-
-        <section class="meta-block chapter-list">
-          <h2>Главы учебника</h2>
-          <ol id="chapters"></ol>
-        </section>
       </aside>
 
       <section class="workspace">
@@ -61,11 +56,14 @@
         <section id="trainerView" class="panel trainer">
           <div class="trainer-question">
             <div>
-              <span class="eyebrow">Вопрос</span>
+              <span id="trainerProgress" class="eyebrow">Вопрос 1 из 5</span>
               <h2 id="trainerQuestion">-</h2>
               <p id="trainerSource" class="muted"></p>
             </div>
-            <button id="nextQuestion" type="button">Следующий</button>
+            <div class="trainer-actions">
+              <button id="newTest" type="button">Новый тест</button>
+              <button id="nextQuestion" type="button" disabled>Следующий</button>
+            </div>
           </div>
           <form id="trainerForm" class="trainer-form">
             <textarea id="trainerAnswer" rows="6" placeholder="Ваш ответ"></textarea>

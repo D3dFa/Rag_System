@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import zlib
 from collections import Counter, defaultdict
@@ -11,7 +12,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PDF_PATH = ROOT / "DM2024.pdf"
+PDF_PATH = Path(os.environ.get("DM_RAG_PDF", str(ROOT / "DM2024.pdf")))
 DATA_DIR = ROOT / "data"
 OUTPUT_PATH = DATA_DIR / "index.json"
 SELECTED_CHAPTER_NUMBER = 1
@@ -636,10 +637,10 @@ def clean_page_text(text: str) -> str:
         line = line.strip()
         if not line:
             continue
-        line = re.sub(r"\d+\s*/\s*1738", "", line).strip()
+        line = re.sub(r"\d+\s*/\s*\d+", "", line).strip()
         if not line:
             continue
-        if re.fullmatch(r"\d+\s*/\s*1738", line):
+        if re.fullmatch(r"\d+\s*/\s*\d+", line):
             continue
         if re.fullmatch(r"\d+", line):
             continue
@@ -674,7 +675,7 @@ def normalise_extracted_text(text: str) -> str:
 
 
 def clean_chapter_text(text: str) -> str:
-    text = re.sub(r"\d+\s*/\s*1738", " ", text)
+    text = re.sub(r"\d+\s*/\s*\d+", " ", text)
     lines = text.splitlines()
     cleaned: list[str] = []
     skip_algorithm = 0

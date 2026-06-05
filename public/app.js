@@ -1,5 +1,9 @@
 const state = {
   currentQuestion: null,
+  testQuestions: [],
+  currentIndex: 0,
+  results: [],
+  checkedCurrent: false,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -9,6 +13,23 @@ function el(tag, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+function cleanKeywords(chapter) {
+  if (chapter.title.startsWith("1. Множества")) {
+    return [
+      "Множества",
+      "Отношения",
+      "Алгебра подмножеств",
+      "Представление множеств",
+      "Замыкание и сокращение отношений",
+      "Функции",
+      "Отношения эквивалентности",
+      "Отношения порядка",
+      "Характеристические функции",
+    ];
+  }
+  return chapter.keywords.filter((keyword) => keyword !== "программах");
 }
 
 async function api(path, options = {}) {
@@ -31,16 +52,7 @@ function renderMeta(meta) {
 
   const keywords = $("#keywords");
   keywords.replaceChildren(
-    ...meta.selected_chapter.keywords.map((keyword) => el("span", "tag", keyword))
-  );
-
-  const chapters = $("#chapters");
-  chapters.replaceChildren(
-    ...meta.chapters.map((chapter) => {
-      const item = el("li");
-      item.textContent = `${chapter.title} · стр. ${chapter.page_start}`;
-      return item;
-    })
+    ...cleanKeywords(meta.selected_chapter).map((keyword) => el("span", "tag", keyword))
   );
 }
 
@@ -86,21 +98,49 @@ async function askQuestion(event) {
   }
 }
 
-async function loadTrainerQuestion() {
-  const question = await api("/api/trainer/question");
+function renderTrainerQuestion() {
+  const question = state.testQuestions[state.currentIndex];
   state.currentQuestion = question;
+  state.checkedCurrent = false;
   $("#trainerQuestion").textContent = question.question || "Вопросы не найдены";
   $("#trainerSource").textContent = question.section
     ? `${question.section} · стр. ${question.page}`
     : "";
+  $("#trainerProgress").textContent = state.testQuestions.length
+    ? `Вопрос ${state.currentIndex + 1} из ${state.testQuestions.length}`
+    : "Тест";
   $("#trainerAnswer").value = "";
   $("#trainerResult").className = "result empty";
   $("#trainerResult").textContent = "";
+  $("#checkAnswer").disabled = false;
+  $("#nextQuestion").disabled = true;
+  $("#nextQuestion").textContent =
+    state.currentIndex + 1 >= state.testQuestions.length ? "Итог" : "Следующий";
+}
+
+async function loadTrainerTest() {
+  const test = await api("/api/trainer/test?count=5");
+  state.testQuestions = test.questions || [];
+  state.currentIndex = 0;
+  state.results = [];
+  if (state.testQuestions.length) {
+    renderTrainerQuestion();
+    return;
+  }
+  state.currentQuestion = null;
+  $("#trainerProgress").textContent = "Тест";
+  $("#trainerQuestion").textContent = "Вопросы не найдены";
+  $("#trainerSource").textContent = "";
+  $("#trainerAnswer").value = "";
+  $("#trainerResult").className = "result empty";
+  $("#trainerResult").textContent = "";
+  $("#checkAnswer").disabled = true;
+  $("#nextQuestion").disabled = true;
 }
 
 async function checkTrainerAnswer(event) {
   event.preventDefault();
-  if (!state.currentQuestion) return;
+  if (!state.currentQuestion || state.checkedCurrent) return;
   const answer = $("#trainerAnswer").value.trim();
   if (!answer) return;
 
@@ -114,13 +154,43 @@ async function checkTrainerAnswer(event) {
     box.className = `result ${result.correct ? "correct" : "wrong"}`;
     const verdict = result.correct ? "Засчитано" : "Не засчитано";
     box.textContent = `${verdict}. ${result.explanation}`;
+    state.results[state.currentIndex] = result;
+    state.checkedCurrent = true;
+    $("#nextQuestion").disabled = false;
   } catch (error) {
     const box = $("#trainerResult");
     box.className = "result wrong";
     box.textContent = "Не удалось проверить ответ.";
-  } finally {
     $("#checkAnswer").disabled = false;
   }
+}
+
+function showTrainerSummary() {
+  const correct = state.results.filter((result) => result && result.correct).length;
+  const total = state.testQuestions.length;
+  state.currentQuestion = null;
+  state.checkedCurrent = true;
+  $("#trainerProgress").textContent = "Итог";
+  $("#trainerQuestion").textContent = `Результат: ${correct} из ${total}`;
+  $("#trainerSource").textContent = "";
+  $("#trainerAnswer").value = "";
+  $("#checkAnswer").disabled = true;
+  $("#nextQuestion").disabled = true;
+  $("#trainerResult").className = correct === total ? "result correct" : "result wrong";
+  $("#trainerResult").textContent =
+    correct === total
+      ? "Все ответы зачтены."
+      : "Можно запустить новый тест и пройти вопросы еще раз.";
+}
+
+function nextTrainerQuestion() {
+  if (!state.checkedCurrent) return;
+  if (state.currentIndex + 1 >= state.testQuestions.length) {
+    showTrainerSummary();
+    return;
+  }
+  state.currentIndex += 1;
+  renderTrainerQuestion();
 }
 
 function setupTabs() {
@@ -138,10 +208,11 @@ async function init() {
   setupTabs();
   $("#askForm").addEventListener("submit", askQuestion);
   $("#trainerForm").addEventListener("submit", checkTrainerAnswer);
-  $("#nextQuestion").addEventListener("click", loadTrainerQuestion);
+  $("#nextQuestion").addEventListener("click", nextTrainerQuestion);
+  $("#newTest").addEventListener("click", loadTrainerTest);
   try {
     renderMeta(await api("/api/meta"));
-    await loadTrainerQuestion();
+    await loadTrainerTest();
   } catch (error) {
     addMessage("system", "Индекс не загружен. Проверьте data/index.json.");
   }
