@@ -70,10 +70,17 @@ STOPWORDS = {
 WORD_RE = re.compile(r"[a-zа-яё0-9]+", re.IGNORECASE)
 SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[А-ЯA-Z0-9])")
 FORMULA_CHARS = set("{}[]=<>\x0e\x1a\x11\x02\x03∈∉⊂⊆⊄∩∪→←↔⇔¬&|^_")
+BROKEN_DEF_FORMULA_RE = re.compile(
+    r"\s*(?:Def|def)\s*=\s*"
+    r"(?:[A-Za-z0-9\s(){}\[\];,.:+\-*/\\&|<>=!?]|[∈∉⊂⊆⊄∩∪→←↔⇔¬]){8,420}"
+    r"(?=(?:[А-ЯЁ][а-яё]{2,}|$))"
+)
 GLUED_TERM_REPLACEMENTS = (
     (re.compile(r"\b(отношени(?:ями|ям|ях|ем|е|я|ю))(?=[а-яё])", re.IGNORECASE), r"\1 "),
     (re.compile(r"\b(функц(?:иями|иям|иях|ией|ия|ии|ию|ие|ий))(?=[а-яё])", re.IGNORECASE), r"\1 "),
     (re.compile(r"\b([а-яё]+(?:ами|ями|ью|остью|ю))или(?=[а-яё])", re.IGNORECASE), r"\1 или "),
+    (re.compile(r"\b(случае)(диаграмм\w+)", re.IGNORECASE), r"\1 \2"),
+    (re.compile(r"\b(Хассе)(для)\b", re.IGNORECASE), r"\1 \2"),
 )
 
 SYMBOL_GLOSSARY = [
@@ -228,10 +235,19 @@ def definition_clause(sentence: str) -> str:
     return min(matches, key=len) if matches else sentence
 
 
+def strip_broken_formula_fragments(text: str) -> str:
+    text = re.sub(r"\s*\(\s*\)\s*", ". ", text)
+    text = BROKEN_DEF_FORMULA_RE.sub(". ", text)
+    text = re.sub(r"\.{2,}", ".", text)
+    text = re.sub(r"\.\s*([,;:])", r"\1", text)
+    return text
+
+
 def display_text(text: str) -> str:
     text = split_glued_terms(text)
     text = "".join(char if ord(char) >= 32 or char in "\t\n\r" else " " for char in text)
     text = re.sub(r"\b\d+\s*/\s*\d+\b", " ", text)
+    text = strip_broken_formula_fragments(text)
     text = re.sub(r"\bker\s*([A-Za-z])\b", r"ker \1", text)
     text = re.sub(r"\bnat\s*ker\s*([A-Za-z])\b", r"nat ker \1", text)
     text = re.sub(r"\bA\s*=\s*ker\s*f\b", "A / ker f", text)
